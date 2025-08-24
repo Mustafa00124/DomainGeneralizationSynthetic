@@ -200,14 +200,15 @@ def plot_latents_by_domain(Z, Y, D):
     print("Combined latent space plot saved!")
 
 def plot_training_history_detailed(history, method):
-    """Plot training history with combined loss and accuracy plots"""
+    """Plot training history with combined loss and accuracy plots in a single PNG"""
     create_plot_directories()
     
     epochs = range(1, len(history['overall_losses']) + 1)
     
-    # Create combined loss plot
-    plt.figure(figsize=(12, 5))
+    # Create single figure with both loss and accuracy plots side by side
+    plt.figure(figsize=(16, 6))
     
+    # Loss plot on the left
     plt.subplot(1, 2, 1)
     plt.plot(epochs, history['overall_losses'], 'b-', linewidth=2, label='Overall Loss')
     plt.plot(epochs, history['domain1_losses'], 'g--', linewidth=2, label='Domain 1 Loss')
@@ -218,7 +219,7 @@ def plot_training_history_detailed(history, method):
     plt.legend()
     plt.grid(True, alpha=0.3)
     
-    # Create combined accuracy plot
+    # Accuracy plot on the right
     plt.subplot(1, 2, 2)
     plt.plot(epochs, history['overall_accuracies'], 'b-', linewidth=2, label='Overall Accuracy')
     plt.plot(epochs, history['domain1_accuracies'], 'g--', linewidth=2, label='Domain 1 Accuracy')
@@ -230,11 +231,11 @@ def plot_training_history_detailed(history, method):
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'loss_{method}.png'), dpi=300, bbox_inches='tight')
-    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'accuracy_{method}.png'), dpi=300, bbox_inches='tight')
+    # Save only one combined PNG file
+    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'training_history_{method}.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"Combined training history plots saved for {method} method!")
+    print(f"Combined training history plot saved for {method} method!")
 
 def plot_intervention_accuracy_table(erm_results, gradaligned_results, method):
     """Plot intervention accuracy comparison as a table"""
