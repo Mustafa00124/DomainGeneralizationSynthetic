@@ -71,11 +71,10 @@ def evaluate_intervention_accuracy(model, intervention_data, device='cpu'):
     model.eval()
     criterion = nn.BCELoss()
     
-    (X_inv_int, Y_inv_int, D_inv_int), (X_spu_int, Y_spu_int, D_spu_int) = intervention_data
+    X_inv_int, Y_inv_int, D_inv_int = intervention_data
     
     # Convert labels from [-1, 1] to [0, 1]
     Y_inv_int_binary = (Y_inv_int + 1) / 2
-    Y_spu_int_binary = (Y_spu_int + 1) / 2
     
     results = {}
     
@@ -107,33 +106,8 @@ def evaluate_intervention_accuracy(model, intervention_data, device='cpu'):
     else:
         results['invariant'] = {'overall_acc': 0, 'domain1_acc': 0, 'domain2_acc': 0}
     
-    # Evaluate on spurious intervention
-    if len(X_spu_int) > 0:
-        X_spu_tensor = torch.FloatTensor(X_spu_int).to(device)
-        Y_spu_tensor = torch.FloatTensor(Y_spu_int_binary).unsqueeze(1).to(device)
-        
-        outputs_spu = model(X_spu_tensor)
-        loss_spu = criterion(outputs_spu, Y_spu_tensor)
-        pred_spu = (outputs_spu > 0.5).float()
-        correct_spu = (pred_spu == Y_spu_tensor).sum().item()
-        
-        # Calculate domain-specific accuracies
-        domain1_mask = (D_spu_int == 1)
-        domain2_mask = (D_spu_int == 2)
-        
-        domain1_correct = ((pred_spu == Y_spu_tensor) & (torch.BoolTensor(domain1_mask).unsqueeze(1).to(device))).sum().item()
-        domain2_correct = ((pred_spu == Y_spu_tensor) & (torch.BoolTensor(domain2_mask).unsqueeze(1).to(device))).sum().item()
-        
-        domain1_total = domain1_mask.sum()
-        domain2_total = domain2_mask.sum()
-        
-        results['spurious'] = {
-            'overall_acc': correct_spu / len(X_spu_int),
-            'domain1_acc': domain1_correct / domain1_total if domain1_total > 0 else 0,
-            'domain2_acc': domain2_correct / domain2_total if domain2_total > 0 else 0
-        }
-    else:
-        results['spurious'] = {'overall_acc': 0, 'domain1_acc': 0, 'domain2_acc': 0}
+    # For backward compatibility, use the same results for spurious intervention
+    results['spurious'] = results['invariant'].copy()
     
     return results
 
@@ -256,16 +230,14 @@ def run_comprehensive_testing(method, device='cpu'):
     intervention_results = evaluate_intervention_accuracy(model, intervention_data, device)
     
     # Print results
-    print(f"\n=== {method.upper()} Model Results (Epoch {epoch}) ===")
+    print(f"\n========== {method.upper()} Model Results (Epoch {epoch}) ==========")
     print(f"Test Accuracy - Overall: {test_results['overall_accuracy']:.4f}")
     print(f"Test Accuracy - Domain 1: {test_results['domain1_accuracy']:.4f}")
     print(f"Test Accuracy - Domain 2: {test_results['domain2_accuracy']:.4f}")
     print(f"Invariant Intervention - Overall: {intervention_results['invariant']['overall_acc']:.4f}")
     print(f"Invariant Intervention - Domain 1: {intervention_results['invariant']['domain1_acc']:.4f}")
     print(f"Invariant Intervention - Domain 2: {intervention_results['invariant']['domain2_acc']:.4f}")
-    print(f"Spurious Intervention - Overall: {intervention_results['spurious']['overall_acc']:.4f}")
-    print(f"Spurious Intervention - Domain 1: {intervention_results['spurious']['domain1_acc']:.4f}")
-    print(f"Spurious Intervention - Domain 2: {intervention_results['spurious']['domain2_acc']:.4f}")
+
     
     return {
         'epoch': epoch,

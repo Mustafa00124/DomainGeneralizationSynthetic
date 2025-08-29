@@ -1,175 +1,25 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import plotly.graph_objects as go
-import plotly.subplots as sp
-from plotly.subplots import make_subplots
 import os
 from constants import *
 
 def create_plot_directories():
     """Create necessary directories for plots"""
-    subdirs = ['input_space', 'latent_space', 'loss_accuracy']
+    subdirs = ['input_space', 'loss_accuracy']
     for subdir in subdirs:
         os.makedirs(os.path.join(PLOTS_DIR, subdir), exist_ok=True)
 
 def plot_inputs_by_domain(X, Y, D):
-    """Plot input space data with combined visualization"""
+    """Plot input space data: x1 vs x2 and x3 vs x4 for each domain"""
     create_plot_directories()
     
-    # Create figure with 2x3 subplots
-    fig, axes = plt.subplots(2, 3, figsize=(18, 12))
+    # Create figure with 2x2 subplots: (x1 vs x2) and (x3 vs x4) for each domain
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     fig.suptitle('Input Space Visualization - Combined Classes and Domains', fontsize=16)
     
-    # Define projections
-    projections = [(0, 1), (0, 2), (1, 2)]
-    projection_names = ['x1 vs x2', 'x1 vs x3', 'x2 vs x3']
-    
     for row, domain in enumerate([1, 2]):
-        for col, (proj, name) in enumerate(zip(projections, projection_names)):
-            ax = axes[row, col]
-            
-            # Plot positive class (class 1) with 'x' marker
-            pos_mask = (Y == 1)
-            domain_mask = (D == domain)
-            pos_domain_mask = pos_mask & domain_mask
-            
-            if pos_domain_mask.sum() > 0:
-                ax.scatter(X[pos_domain_mask, proj[0]], X[pos_domain_mask, proj[1]], 
-                          c='blue', marker='x', s=50, alpha=0.7, label='Class 1')
-            
-            # Plot negative class (class -1) with 'o' marker
-            neg_mask = (Y == -1)
-            neg_domain_mask = neg_mask & domain_mask
-            
-            if neg_domain_mask.sum() > 0:
-                ax.scatter(X[neg_domain_mask, proj[0]], X[neg_domain_mask, proj[1]], 
-                          c='red', marker='o', s=50, alpha=0.7, label='Class -1')
-            
-            ax.set_xlabel(f'x{proj[0]+1}')
-            ax.set_ylabel(f'x{proj[1]+1}')
-            ax.set_title(f'Domain {domain}: {name}')
-            ax.legend()
-            ax.grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS_DIR, 'input_space', 'input_space_combined_2d.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-    print("Combined 2D input space plot saved!")
-
-def plot_inputs_3d_matplotlib(X, Y, D):
-    """Plot 3D input space with combined visualization"""
-    create_plot_directories()
-    
-    fig = plt.figure(figsize=(15, 10))
-    
-    # Create 2x3 subplots for different projections
-    for i, (proj, name) in enumerate([((0, 1, 2), 'x1 vs x2 vs x3')]):
-        ax = fig.add_subplot(1, 1, 1, projection='3d')
-        
-        # Plot positive class (class 1) with 'x' marker
-        pos_mask = (Y == 1)
-        pos_domain1_mask = pos_mask & (D == 1)
-        pos_domain2_mask = pos_mask & (D == 2)
-        
-        if pos_domain1_mask.sum() > 0:
-            ax.scatter(X[pos_domain1_mask, 0], X[pos_domain1_mask, 1], X[pos_domain1_mask, 2], 
-                      c='blue', marker='x', s=50, alpha=0.7, label='Class 1, Domain 1')
-        
-        if pos_domain2_mask.sum() > 0:
-            ax.scatter(X[pos_domain2_mask, 0], X[pos_domain2_mask, 1], X[pos_domain2_mask, 2], 
-                      c='red', marker='x', s=50, alpha=0.7, label='Class 1, Domain 2')
-        
-        # Plot negative class (class -1) with 'o' marker
-        neg_mask = (Y == -1)
-        neg_domain1_mask = neg_mask & (D == 1)
-        neg_domain2_mask = neg_mask & (D == 2)
-        
-        if neg_domain1_mask.sum() > 0:
-            ax.scatter(X[neg_domain1_mask, 0], X[neg_domain1_mask, 1], X[neg_domain1_mask, 2], 
-                      c='blue', marker='o', s=50, alpha=0.7, label='Class -1, Domain 1')
-        
-        if neg_domain2_mask.sum() > 0:
-            ax.scatter(X[neg_domain2_mask, 0], X[neg_domain2_mask, 1], X[neg_domain2_mask, 2], 
-                      c='red', marker='o', s=50, alpha=0.7, label='Class -1, Domain 2')
-        
-        ax.set_xlabel('x1')
-        ax.set_ylabel('x2')
-        ax.set_zlabel('x3')
-        ax.set_title(f'3D Input Space: {name}')
-        ax.legend()
-    
-    plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS_DIR, 'input_space', 'input_space_3d_matplotlib.png'), dpi=300, bbox_inches='tight')
-    plt.close()
-    print("Combined 3D matplotlib input space plot saved!")
-
-def plot_inputs_3d_plotly(X, Y, D):
-    """Plot 3D input space with plotly for interactivity"""
-    create_plot_directories()
-    
-    fig = go.Figure()
-    
-    # Plot positive class (class 1) with 'x' marker
-    pos_mask = (Y == 1)
-    pos_domain1_mask = pos_mask & (D == 1)
-    pos_domain2_mask = pos_mask & (D == 2)
-    
-    if pos_domain1_mask.sum() > 0:
-        fig.add_trace(go.Scatter3d(
-            x=X[pos_domain1_mask, 0], y=X[pos_domain1_mask, 1], z=X[pos_domain1_mask, 2],
-            mode='markers', marker=dict(symbol='x', size=5, color='blue', opacity=0.7),
-            name='Class 1, Domain 1'
-        ))
-    
-    if pos_domain2_mask.sum() > 0:
-        fig.add_trace(go.Scatter3d(
-            x=X[pos_domain2_mask, 0], y=X[pos_domain2_mask, 1], z=X[pos_domain2_mask, 2],
-            mode='markers', marker=dict(symbol='x', size=5, color='red', opacity=0.7),
-            name='Class 1, Domain 2'
-        ))
-    
-    # Plot negative class (class -1) with 'o' marker
-    neg_mask = (Y == -1)
-    neg_domain1_mask = neg_mask & (D == 1)
-    neg_domain2_mask = neg_mask & (D == 2)
-    
-    if neg_domain1_mask.sum() > 0:
-        fig.add_trace(go.Scatter3d(
-            x=X[neg_domain1_mask, 0], y=X[neg_domain1_mask, 1], z=X[neg_domain1_mask, 2],
-            mode='markers', marker=dict(symbol='circle', size=5, color='blue', opacity=0.7),
-            name='Class -1, Domain 1'
-        ))
-    
-    if neg_domain2_mask.sum() > 0:
-        fig.add_trace(go.Scatter3d(
-            x=X[neg_domain2_mask, 0], y=X[neg_domain2_mask, 1], z=X[neg_domain2_mask, 2],
-            mode='markers', marker=dict(symbol='circle', size=5, color='red', opacity=0.7),
-            name='Class -1, Domain 2'
-        ))
-    
-    fig.update_layout(
-        title='3D Input Space Visualization - Combined Classes and Domains',
-        scene=dict(
-            xaxis_title='x1',
-            yaxis_title='x2',
-            zaxis_title='x3'
-        ),
-        width=800, height=600
-    )
-    
-    fig.write_html(os.path.join(PLOTS_DIR, 'input_space', 'input_space_3d_plotly.html'))
-    print("Combined 3D plotly input space plot saved!")
-
-def plot_latents_by_domain(Z, Y, D):
-    """Plot latent space with combined visualization"""
-    create_plot_directories()
-    
-    # Create 2x1 subplots for both domains
-    fig, axes = plt.subplots(2, 1, figsize=(12, 10))
-    fig.suptitle('Latent Space Visualization - Combined Classes and Domains', fontsize=16)
-    
-    for row, domain in enumerate([1, 2]):
-        ax = axes[row]
+        # Plot 1: x1 vs x2 (2D scatter)
+        ax1 = axes[row, 0]
         
         # Plot positive class (class 1) with 'x' marker
         pos_mask = (Y == 1)
@@ -177,7 +27,7 @@ def plot_latents_by_domain(Z, Y, D):
         pos_domain_mask = pos_mask & domain_mask
         
         if pos_domain_mask.sum() > 0:
-            ax.scatter(Z[pos_domain_mask, 0], Z[pos_domain_mask, 1], 
+            ax1.scatter(X[pos_domain_mask, 0], X[pos_domain_mask, 1], 
                       c='blue', marker='x', s=50, alpha=0.7, label='Class 1')
         
         # Plot negative class (class -1) with 'o' marker
@@ -185,19 +35,97 @@ def plot_latents_by_domain(Z, Y, D):
         neg_domain_mask = neg_mask & domain_mask
         
         if neg_domain_mask.sum() > 0:
-            ax.scatter(Z[neg_domain_mask, 0], Z[neg_domain_mask, 1], 
+            ax1.scatter(X[neg_domain_mask, 0], X[neg_domain_mask, 1], 
                       c='red', marker='o', s=50, alpha=0.7, label='Class -1')
         
-        ax.set_xlabel('Latent Dimension 1')
-        ax.set_ylabel('Latent Dimension 2')
-        ax.set_title(f'Domain {domain}')
-        ax.legend()
-        ax.grid(True, alpha=0.3)
+        ax1.set_xlabel('x1')
+        ax1.set_ylabel('x2')
+        ax1.set_title(f'Domain {domain}: x1 vs x2')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Plot 2: x3 vs x4 (2D scatter)
+        ax2 = axes[row, 1]
+        
+        # Plot positive class x3 vs x4
+        if pos_domain_mask.sum() > 0:
+            ax2.scatter(X[pos_domain_mask, 2], X[pos_domain_mask, 3], 
+                      c='blue', marker='x', s=50, alpha=0.7, label='Class 1')
+        
+        # Plot negative class x3 vs x4
+        if neg_domain_mask.sum() > 0:
+            ax2.scatter(X[neg_domain_mask, 2], X[neg_domain_mask, 3], 
+                      c='red', marker='o', s=50, alpha=0.7, label='Class -1')
+        
+        ax2.set_xlabel('x3')
+        ax2.set_ylabel('x4')
+        ax2.set_title(f'Domain {domain}: x3 vs x4')
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    plt.savefig(os.path.join(PLOTS_DIR, 'latent_space', 'latent_space_combined.png'), dpi=300, bbox_inches='tight')
+    plt.savefig(os.path.join(PLOTS_DIR, 'input_space', 'input_space_combined_2d.png'), dpi=300, bbox_inches='tight')
     plt.close()
-    print("Combined latent space plot saved!")
+    print("Combined 2D input space plot saved!")
+
+def plot_intervention_inputs_by_domain(X_inv_int, Y_inv_int, D_inv_int):
+    """Plot intervention input space data: x1 vs x2 and x3 vs x4 for each domain"""
+    create_plot_directories()
+    
+    # Create figure with 2x2 subplots: (x1 vs x2) and (x3 vs x4) for each domain
+    fig, axes = plt.subplots(2, 2, figsize=(16, 12))
+    fig.suptitle('Intervention Input Space Visualization - Combined Classes and Domains', fontsize=16)
+    
+    for row, domain in enumerate([1, 2]):
+        # Plot 1: x1 vs x2 (2D scatter)
+        ax1 = axes[row, 0]
+        
+        # Plot positive class (class 1) with 'x' marker
+        pos_mask = (Y_inv_int == 1)
+        domain_mask = (D_inv_int == domain)
+        pos_domain_mask = pos_mask & domain_mask
+        
+        if pos_domain_mask.sum() > 0:
+            ax1.scatter(X_inv_int[pos_domain_mask, 0], X_inv_int[pos_domain_mask, 1], 
+                      c='blue', marker='x', s=50, alpha=0.7, label='Class 1')
+        
+        # Plot negative class (class -1) with 'o' marker
+        neg_mask = (Y_inv_int == -1)
+        neg_domain_mask = neg_mask & domain_mask
+        
+        if neg_domain_mask.sum() > 0:
+            ax1.scatter(X_inv_int[neg_domain_mask, 0], X_inv_int[neg_domain_mask, 1], 
+                      c='red', marker='o', s=50, alpha=0.7, label='Class -1')
+        
+        ax1.set_xlabel('x1')
+        ax1.set_ylabel('x2')
+        ax1.set_title(f'Domain {domain}: x1 vs x2 (Intervention)')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Plot 2: x3 vs x4 (2D scatter)
+        ax2 = axes[row, 1]
+        
+        # Plot positive class x3 vs x4
+        if pos_domain_mask.sum() > 0:
+            ax2.scatter(X_inv_int[pos_domain_mask, 2], X_inv_int[pos_domain_mask, 3], 
+                      c='blue', marker='x', s=50, alpha=0.7, label='Class 1')
+        
+        # Plot negative class x3 vs x4
+        if neg_domain_mask.sum() > 0:
+            ax2.scatter(X_inv_int[neg_domain_mask, 2], X_inv_int[neg_domain_mask, 3], 
+                      c='red', marker='o', s=50, alpha=0.7, label='Class -1')
+        
+        ax2.set_xlabel('x3')
+        ax2.set_ylabel('x4')
+        ax2.set_title(f'Domain {domain}: x3 vs x4 (Intervention)')
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR, 'input_space', 'intervention_input_space_combined_2d.png'), dpi=300, bbox_inches='tight')
+    plt.close()
+    print("Intervention input space plot saved!")
 
 def plot_training_history_detailed(history, method):
     """Plot training history with combined loss and accuracy plots in a single PNG"""
@@ -231,11 +159,66 @@ def plot_training_history_detailed(history, method):
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    # Save only one combined PNG file
-    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'training_history_{method}.png'), dpi=300, bbox_inches='tight')
+    # Save with new naming convention
+    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'{method}_training_history.png'), dpi=300, bbox_inches='tight')
     plt.close()
     
     print(f"Combined training history plot saved for {method} method!")
+
+def plot_intervention_accuracy_history(history, method):
+    """Plot intervention accuracy per epoch for a single method"""
+    create_plot_directories()
+    
+    if 'invariant_accuracies' not in history:
+        print(f"No intervention data available for {method}")
+        return
+    
+    epochs = range(1, len(history['invariant_accuracies']) + 1)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, history['invariant_accuracies'], 'b-', linewidth=2, label=f'{method.upper()} Intervention Accuracy')
+    plt.axhline(y=0.5, color='r', linestyle='--', alpha=0.7, label='Random Chance (50%)')
+    plt.xlabel('Epoch')
+    plt.ylabel('Intervention Accuracy')
+    plt.title(f'{method.upper()} Intervention Accuracy Over Training')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.ylim(0, 1)
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'{method}_intervention_history.png'), dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Intervention accuracy plot saved for {method} method!")
+
+def plot_intervention_validation_history(erm_history, gradaligned_history, method):
+    """Plot intervention validation history comparing both methods"""
+    create_plot_directories()
+    
+    # Create single figure with intervention accuracy comparison
+    plt.figure(figsize=(12, 6))
+    
+    if 'invariant_accuracies' in erm_history and 'invariant_accuracies' in gradaligned_history:
+        epochs = range(1, len(erm_history['invariant_accuracies']) + 1)
+        plt.plot(epochs, erm_history['invariant_accuracies'], 'b-', linewidth=2, label='ERM Intervention')
+        plt.plot(epochs, gradaligned_history['invariant_accuracies'], 'r-', linewidth=2, label='GradAligned Intervention')
+        plt.axhline(y=0.5, color='gray', linestyle='--', alpha=0.7, label='Random Chance (50%)')
+        plt.xlabel('Epoch')
+        plt.ylabel('Intervention Accuracy')
+        plt.title(f'{method.upper()} Intervention Accuracy Comparison')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.ylim(0, 1)
+    else:
+        plt.text(0.5, 0.5, 'No intervention validation data available', 
+                ha='center', va='center', transform=plt.gca().transAxes)
+        plt.title(f'{method.upper()} Intervention Accuracy Comparison')
+    
+    plt.tight_layout()
+    plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'intervention_comparison_{method}.png'), dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Intervention comparison plot saved for {method} method!")
 
 def plot_intervention_accuracy_table(erm_results, gradaligned_results, method):
     """Plot intervention accuracy comparison as a table"""
@@ -278,7 +261,7 @@ def plot_intervention_accuracy_table(erm_results, gradaligned_results, method):
             else:
                 table[(i, j)].set_facecolor('#E8F5E8')
     
-    plt.title('Intervention Accuracy Comparison', fontsize=16, pad=20)
+    plt.title(f'{method.upper()} Intervention Accuracy Comparison', fontsize=16, pad=20)
     plt.savefig(os.path.join(PLOTS_DIR, 'loss_accuracy', f'intervention_accuracy_{method}.png'), 
                 dpi=300, bbox_inches='tight')
     plt.close()
@@ -294,22 +277,15 @@ if __name__ == "__main__":
     # Test plotting functions
     print("Testing plotting functions...")
     
-    # Create dummy data for testing
+    # Create dummy data for testing (4 features)
     np.random.seed(42)
-    X = np.random.randn(200, 3)
+    X = np.random.randn(200, 4)
     Y = np.random.choice([-1, 1], 200)
     D = np.random.choice([1, 2], 200)
     
     # Test input space plotting
     print("\nTesting input space plotting...")
     plot_inputs_by_domain(X, Y, D)
-    plot_inputs_3d_matplotlib(X, Y, D)
-    plot_inputs_3d_plotly(X, Y, D)
-    
-    # Test latent space plotting
-    print("\nTesting latent space plotting...")
-    Z = np.random.randn(200, 2)  # Dummy latent representations
-    plot_latents_by_domain(Z, Y, D)
     
     # Test training history plotting
     print("\nTesting training history plotting...")
